@@ -49,7 +49,6 @@ def compile_report(df: pd.DataFrame) -> Dict[str, Dict[str, list]]:
 def _generate_weekly_report(df: pd.DataFrame) -> Dict[str, Dict[str, list]]:
     # Compile the report
     report = compile_report(df)
-    print(report)
 
     # Initialize variables to calculate total distance
     total_distance = 0
