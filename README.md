@@ -1,9 +1,6 @@
 How to run: 
 ```
+make venv
 make setup
-````
-
-Folowed by: 
-```
 make run
 ```
