@@ -9,7 +9,7 @@ import pandas as pd
 from docxtpl import DocxTemplate
 import jinja2
 
-from utils import prepare_data, fill_template, prepare_context
+from utils import prepare_data, prepare_context
 
 import warnings
 
@@ -109,9 +109,6 @@ def run_analysis() -> None:
     # Paths to the template and the output file
     template_path = './log_template.docx'
     output_path = './filled_log.docx'
-
-    # Fill the template
-    # fill_template(report, template_path, output_path)
     
     doc = DocxTemplate(template_path)
     context = prepare_context(report)

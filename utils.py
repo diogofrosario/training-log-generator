@@ -55,49 +55,7 @@ def replace_text(paragraph, old_text, new_text):
             print(f"Replacing '{old_text}' with '{new_text}'")  # Debug statement
             run.text = run.text.replace(old_text, new_text)
 
-def fill_template(data, template_path, output_path):
-    document = Document(template_path)
 
-    days_of_week = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
-    start_date = datetime.date(2024, 6, 3)
-    total_distance = 0.0
-
-    for i, day in enumerate(days_of_week):
-        current_date = start_date + datetime.timedelta(days=i)
-        date_str = current_date.strftime("%Y-%m-%d")
-
-        for paragraph in document.paragraphs:
-            replace_text(paragraph, f"[DATE_{day}]", date_str)
-
-        morning_data = data.get(current_date, {}).get('morning', [])
-        afternoon_data = data.get(current_date, {}).get('afternoon', [])
-
-        morning_time = ", ".join([item['Time'] for item in morning_data])
-        morning_dist = ", ".join([str(item['Distance']) for item in morning_data])
-        morning_pace = ", ".join([item['Pace'] for item in morning_data])
-
-        afternoon_time = ", ".join([item['Time'] for item in afternoon_data])
-        afternoon_dist = ", ".join([str(item['Distance']) for item in afternoon_data])
-        afternoon_pace = ", ".join([item['Pace'] for item in afternoon_data])
-
-        for paragraph in document.paragraphs:
-            replace_text(paragraph, f"[TIME_{day}_MORN]", morning_time)
-            replace_text(paragraph, f"[DIST_{day}_MORN]", morning_dist)
-            replace_text(paragraph, f"[PACE_{day}_MORN]", morning_pace)
-
-            replace_text(paragraph, f"[TIME_{day}_AFTER]", afternoon_time)
-            replace_text(paragraph, f"[DIST_{day}_AFTER]", afternoon_dist)
-            replace_text(paragraph, f"[PACE_{day}_AFTER]", afternoon_pace)
-
-        total_distance += sum(item['Distance'] for item in morning_data + afternoon_data)
-
-    for paragraph in document.paragraphs:
-        replace_text(paragraph, "[WEEKLY_DISTANCE]", str(total_distance))
-
-    document.save(output_path)
-
-
-# Function to prepare context for the template
 def prepare_context(data):
     context = {}
     days_of_week = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
@@ -108,7 +66,7 @@ def prepare_context(data):
         current_date = start_date + datetime.timedelta(days=i)
         date_str = current_date.strftime("%Y-%m-%d")
 
-        morning_data = data.get(current_date, {}).get('morning', [])
+        morning_data = data.get(current_date, {}).get('morning', []); print(morning_data)
         afternoon_data = data.get(current_date, {}).get('afternoon', [])
 
         morning_time = ", ".join([item['Time'] for item in morning_data]) if morning_data else ""

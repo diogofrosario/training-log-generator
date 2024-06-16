@@ -1,6 +1,8 @@
 .env
 venv
+log
 .vscode
 __pycache__
 .idea
 .DS_Store
+filled_log.docx
