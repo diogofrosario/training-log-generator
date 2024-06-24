@@ -29,13 +29,23 @@ def _filter_by_date(df: pd.DataFrame, start_day: str, number_of_days: int) -> pd
     date_filter = start_datetime - pd.Timedelta(days=number_of_days)
     return df[(df["Date"] >= date_filter.date()) & (df["Date"] <= start_datetime.date())]
 
-
 def _create_date_and_time_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["Date"] = pd.to_datetime(df["Date"])
     df["Time_of_Day"] = df["Date"].dt.time
     df["Date"] = df["Date"].dt.date
     return df
 
+# make it so that the csv file can be in portuguese and not only in english
+def _filter_by_date_pt(df: pd.DataFrame, start_day: str, number_of_days: int) -> pd.DataFrame:
+    start_datetime = pd.to_datetime(start_day)  # Convert start_day to pandas Timestamp
+    date_filter = start_datetime - pd.Timedelta(days=number_of_days)
+    return df[(df["Data"] >= date_filter.date()) & (df["Date"] <= start_datetime.date())]
+
+def _create_date_and_time_columns_pt(df: pd.DataFrame) -> pd.DataFrame:
+    df["Data"] = pd.to_datetime(df["Data"])
+    df["Hora"] = df["Data"].dt.time
+    df["Data"] = df["Data"].dt.date
+    return df
 
 def _morning_or_afternoon(time: pd.Timestamp) -> str:
     if time.hour < 12:
