@@ -92,7 +92,8 @@ def last_sunday() -> str:
 
 def run_analysis() -> None:
     # Get the values from the entry widgets
-    number_of_days = int(entry1.get())
+    number_of_days = 6
+    name = entry1.get()
     start_day = entry2.get()
     file_path = open_file()
 
@@ -107,7 +108,7 @@ def run_analysis() -> None:
     
     # Paths to the template and the output file
     template_path = './log_template.docx'
-    output_path = './filled_log.docx'
+    output_path = f'./Registo_Treino {name}.docx'
     
     doc = DocxTemplate(template_path)
     context = prepare_context(report)
@@ -121,11 +122,11 @@ def run_analysis() -> None:
 if __name__ == "__main__":
     root = tk.Tk()
 
-    label1 = tk.Label(root, text="Number of days:")
+    label1 = tk.Label(root, text="Name:")
     label1.pack()
     entry1 = tk.Entry(root)
     entry1.pack()
-    entry1.insert(0, "6")
+    entry1.insert(0, "Diogo")
 
     label2 = tk.Label(root, text="Start day:")
     label2.pack()
