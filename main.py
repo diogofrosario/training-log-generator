@@ -107,7 +107,7 @@ def run_analysis() -> None:
     report = _generate_weekly_report(df)
     
     # Paths to the template and the output file
-    template_path = './log_template.docx'
+    template_path = 'data/log_template.docx'
     output_path = f'./Registo_Treino {name}.docx'
     
     doc = DocxTemplate(template_path)

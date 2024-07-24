@@ -6,3 +6,9 @@ __pycache__
 .idea
 .DS_Store
 filled_log.docx
+Registo_Treino Diogo.docx
+.python-version
+
+build
+dist
+main.spec

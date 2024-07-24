@@ -18,9 +18,16 @@ def _read_data(data_dir: str = "Activities.csv") -> pd.DataFrame:
 
 
 def _preprocess(df: pd.DataFrame, start_day: str, number_of_days: int) -> pd.DataFrame:
-    df = _create_date_and_time_columns(df)
-    df = _filter_by_date(df, start_day, number_of_days)
-    df["am_pm"] = df["Time_of_Day"].apply(_morning_or_afternoon)
+    try:
+        df = _create_date_and_time_columns(df)
+        df = _filter_by_date(df, start_day, number_of_days)
+        df["am_pm"] = df["Time_of_Day"].apply(_morning_or_afternoon)
+    except Exception as e:
+        print("Portuguese data file")
+        print(e)
+        df = _create_date_and_time_columns_pt(df)
+        df = _filter_by_date_pt(df, start_day, number_of_days)
+        df["am_pm"] = df["Hora"].apply(_morning_or_afternoon)
     return df
 
 
