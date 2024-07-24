@@ -1,13 +1,11 @@
 import tkinter as tk
 from tkinter import filedialog
-import argparse
 from datetime import datetime, timedelta
 from typing import Dict
 
 import pandas as pd
 
 from docxtpl import DocxTemplate
-import jinja2
 
 from utils import prepare_data, prepare_context
 
@@ -53,7 +51,7 @@ def _generate_weekly_report(df: pd.DataFrame) -> Dict[str, Dict[str, list]]:
     # Initialize variables to calculate total distance
     total_distance = 0
 
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    # days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     # Print the report
     for date, runs in report.items():

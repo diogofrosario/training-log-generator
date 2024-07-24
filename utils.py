@@ -1,12 +1,5 @@
 import pandas as pd
-from typing import Dict
 import datetime
-
-from docxtpl import DocxTemplate
-import jinja2
-from docx import Document
-
-
 import warnings
 
 warnings.filterwarnings("ignore")
