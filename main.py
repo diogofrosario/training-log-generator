@@ -64,7 +64,6 @@ def _generate_weekly_report(df: pd.DataFrame) -> Dict[str, Dict[str, list]]:
                     total_distance += run['Distance']
             else:
                 print(f"No {period} runs.")
-        print()
 
     # Print total distance for the week
     print(f"Total distance for the week: {total_distance} kms.")
@@ -94,8 +93,6 @@ def run_analysis() -> None:
     name = entry1.get()
     start_day = entry2.get()
     file_path = open_file()
-
-    print(file_path)
 
     # Call the prepare_data function with the retrieved values
     df = prepare_data(file_path, number_of_days, start_day)

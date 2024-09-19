@@ -2,9 +2,9 @@
 venv:
 	python3 -m venv venv
 
-.PHONY setup:
+.PHONY: setup
 setup: 
-	. venv/bin/activate && pip install -r requirements.txt
+	. venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
 
 .PHONY: run
 run:
