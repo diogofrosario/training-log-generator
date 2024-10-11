@@ -1,11 +1,21 @@
-FROM debian
+FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY main.py requirements.txt utils.py /data/
+# Copy the requirements file to the container
+COPY requirements.txt .
 
-RUN apt-get update && apt-get install -y python3-pip
+# Install the required Python packages
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip3 install -r requirements.txt
+# Copy all necessary files and folders to the container
+COPY . .
 
-CMD ["python3", "main.py"]
+# Expose port 8501 for Streamlit 
+EXPOSE 8501
+
+# Set the environment variable to avoid issues with Tkinter in Docker
+ENV DISPLAY=:99
+
+# Command to run the application
+CMD ["python", "main.py"]

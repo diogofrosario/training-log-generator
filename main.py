@@ -1,135 +1,219 @@
+import pandas as pd
+from datetime import datetime, timedelta
+
 import tkinter as tk
 from tkinter import filedialog
-from datetime import datetime, timedelta
 from typing import Dict
-
-import pandas as pd
 
 from docxtpl import DocxTemplate
 
-from utils import prepare_data, prepare_context
+NUMBER_OF_DAYS = 6
 
-import warnings
+class DataLoader:
+    def __init__(self, file_path: str, start_day: str, number_of_days: int):
+        self.file_path = file_path
+        self.start_day = start_day
+        self.number_of_days = number_of_days
+        self.data = None
 
-warnings.filterwarnings("ignore")
+    def load_data(self) -> pd.DataFrame:
+        df = pd.read_csv(self.file_path)
+        self.data = self.__preprocess(df)
+        return self.data
 
+    def __preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
+        try:
+            df = self.__create_date_and_time_columns(df)
+            df = self.__filter_by_date(df)
+        except KeyError:
+            df = self.__rename_columns_for_portuguese(df)
+            df = self.__create_date_and_time_columns(df)
+            df = self.__filter_by_date(df)
+        df["am_pm"] = df["Time_of_Day"].apply(self.__morning_or_afternoon)
+        return df
 
-def open_file():
-    filename = filedialog.askopenfilename(initialdir="/", title="Select file",
-                                          filetypes=(("CSV files", "*.csv"), ("all files", "*.*")))
-    return filename
+    def __rename_columns_for_portuguese(self, df: pd.DataFrame) -> pd.DataFrame:
+        df.rename(columns={"Data": "Date", "Distância": "Distance", "Tempo": "Time", "Ritmo médio": "Avg Pace"}, inplace=True)
+        return df
 
+    def __create_date_and_time_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df["Time_of_Day"] = df["Date"].dt.time
+        df["Date"] = df["Date"].dt.date
+        return df
 
-def compile_report(df: pd.DataFrame) -> Dict[str, Dict[str, list]]:
-    # Initialize an empty dictionary to store the runs information for each day and period (morning/afternoon)
-    report = {}
+    def __filter_by_date(self, df: pd.DataFrame) -> pd.DataFrame:
+        start_datetime = pd.to_datetime(self.start_day)
+        date_filter = start_datetime - pd.Timedelta(days=self.number_of_days)
+        return df[(df["Date"] >= date_filter.date()) & (df["Date"] <= start_datetime.date())]
 
-    # Group the DataFrame by Date and am_pm (morning/afternoon)
-    grouped = df.groupby(["Date", "am_pm"])
+    @staticmethod
+    def __morning_or_afternoon(time: pd.Timestamp) -> str:
+        return "morning" if time.hour < 12 else "afternoon"
 
-    # Iterate over each group and extract relevant information
-    for (date, am_pm), group_df in grouped:
-        if date not in report:
-            report[date] = {"morning": [], "afternoon": []}
+class ReportGenerator:
+    def __init__(self, data: pd.DataFrame):
+        self.data = data
 
-        # Extracting information for each run
-        for _, row in group_df.iterrows():
-            run_info = {
-                "Time": row["Time"],
-                "Distance": row["Distance"],
-                "Pace": row["Avg Pace"]
-            }
-            report[date][am_pm].append(run_info)
+    def compile_report(self) -> Dict[str, Dict[str, list]]:
+        report = {}
+        grouped = self.data.groupby(["Date", "am_pm"])
 
-    return report
+        for (date, am_pm), group_df in grouped:
+            if date not in report:
+                report[date] = {"morning": [], "afternoon": []}
 
+            for _, row in group_df.iterrows():
+                run_info = {"Time": row["Time"], "Distance": row["Distance"], "Pace": row["Avg Pace"]}
+                report[date][am_pm].append(run_info)
 
-def _generate_weekly_report(df: pd.DataFrame) -> Dict[str, Dict[str, list]]:
-    # Compile the report
-    report = compile_report(df)
+        return report
 
-    # Initialize variables to calculate total distance
-    total_distance = 0
+class TemplateRenderer:
+    def __init__(self, template_path: str):
+        self.template_path = template_path
 
-    # days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    def render_report(self, report: Dict[str, Dict[str, list]], output_path: str) -> None:
+        doc = DocxTemplate(self.template_path)
+        context = self.__prepare_context(report)
+        doc.render(context)
+        doc.save(output_path)
 
-    # Print the report
-    for date, runs in report.items():
-        print(f"Date: {date}")
-        for period, run_info in runs.items():
-            if run_info:  # Check if there are any runs in this period
-                print(f"{period.capitalize()} runs:")
-                for run in run_info:
-                    print(f"   Time: {run['Time']}, Distance: {run['Distance']}, Pace: {run['Pace']}")
-                    total_distance += run['Distance']
-            else:
-                print(f"No {period} runs.")
+    def __prepare_context(self, data: Dict[str, Dict[str, list]]) -> Dict[str, str]:
+        context = {}
+        days_of_week = [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY",
+        ]
+        start_date = list(data.keys())[0]
+        total_distance = 0.0
 
-    # Print total distance for the week
-    print(f"Total distance for the week: {total_distance} kms.")
-    return report
+        for i, day in enumerate(days_of_week):
+            current_date = start_date + timedelta(days=i)
+            date_str = current_date.strftime("%Y-%m-%d")
 
+            morning_data = data.get(current_date, {}).get("morning", [])
+            afternoon_data = data.get(current_date, {}).get("afternoon", [])
 
-def last_sunday() -> str:
-    # Get the current date
-    current_date = datetime.today()
+            # when there are more than one run in a morning or afternoon (workouts with warm up, main workout, cool down)
+            # the order of the activities would should in the incorrect order so we reverse the list to show the correct order
+            if len(morning_data) > 1:
+                morning_data = morning_data[::-1]
 
-    # Check if today is Sunday
-    if current_date.weekday() == 6:  # Sunday is represented by 6
-        return current_date.strftime("%Y/%m/%d")
+            if len(afternoon_data) > 1:
+                afternoon_data = afternoon_data[::-1]
 
-    # Find the number of days to subtract to reach the last Sunday
-    days_to_subtract = (7 + current_date.weekday()) % 6
+            morning_time = (
+                ", ".join([item["Time"] for item in morning_data]) if morning_data else ""
+            )
+            morning_dist = (
+                ", ".join([str(item["Distance"]) for item in morning_data])
+                if morning_data
+                else ""
+            )
+            morning_pace = (
+                ", ".join([item["Pace"] for item in morning_data]) if morning_data else ""
+            )
 
-    # Subtract the days to get the date of the last Sunday
-    last_sunday_date = current_date - timedelta(days=days_to_subtract)
+            afternoon_time = (
+                ", ".join([item["Time"] for item in afternoon_data])
+                if afternoon_data
+                else ""
+            )
+            afternoon_dist = (
+                ", ".join([str(item["Distance"]) for item in afternoon_data])
+                if afternoon_data
+                else ""
+            )
+            afternoon_pace = (
+                ", ".join([item["Pace"] for item in afternoon_data])
+                if afternoon_data
+                else ""
+            )
 
-    return last_sunday_date.strftime("%Y/%m/%d")
+            context[f"DATE_{day}"] = date_str
+            context[f"TIME_{day}_MORN"] = morning_time
+            context[f"DIST_{day}_MORN"] = morning_dist
+            context[f"PACE_{day}_MORN"] = morning_pace
+            context[f"TIME_{day}_AFTER"] = afternoon_time
+            context[f"DIST_{day}_AFTER"] = afternoon_dist
+            context[f"PACE_{day}_AFTER"] = afternoon_pace
 
+            print(
+                f"{day}: Date: {date_str}, Morning: {morning_time}, {morning_dist}, {morning_pace}, Afternoon: {afternoon_time}, {afternoon_dist}, {afternoon_pace}"
+            )  # Debug statement
 
-def run_analysis() -> None:
-    # Get the values from the entry widgets
-    number_of_days = 6
-    name = entry1.get()
-    start_day = entry2.get()
-    file_path = open_file()
+            total_distance += sum(
+                item["Distance"] for item in morning_data + afternoon_data
+            )
 
-    # Call the prepare_data function with the retrieved values
-    df = prepare_data(file_path, number_of_days, start_day)
-
-    # Generate and display the report
+        context["WEEKLY_DISTANCE"] = str(round(total_distance, 2))
+        # print(f"Weekly Total Distance: {total_distance}")  # Debug statement
+        return context
     
-    report = _generate_weekly_report(df)
-    
-    # Paths to the template and the output file
-    template_path = 'data/log_template.docx'
-    output_path = f'./Registo_Treino {name}.docx'
-    
-    doc = DocxTemplate(template_path)
-    context = prepare_context(report)
-    doc.render(context)
-    doc.save(output_path)
+class GUIApplication:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.name_entry = None
+        self.start_day_entry = None
+        self.__setup_gui()
 
-    root.destroy()  # Close the GUI window after generating the report
-    return
+    def __setup_gui(self):
+        label1 = tk.Label(self.root, text="Name:")
+        label1.pack()
+        self.name_entry = tk.Entry(self.root)
+        self.name_entry.pack()
+        self.name_entry.insert(0, "Diogo")
 
+        label2 = tk.Label(self.root, text="Start day:")
+        label2.pack()
+        self.start_day_entry = tk.Entry(self.root)
+        self.start_day_entry.pack()
+        self.start_day_entry.insert(0, self.__get_last_sunday())
 
+        button2 = tk.Button(self.root, text="Open CSV File and Generate Report", command=self.run_analysis)
+        button2.pack()
+
+        self.root.mainloop()
+
+    @staticmethod
+    def __get_last_sunday() -> str:
+       # Get the current date
+        current_date = datetime.today()
+
+        # Check if today is Sunday
+        if current_date.weekday() == 6:  # Sunday is represented by 6
+            return current_date.strftime("%Y/%m/%d")
+
+        # Find the number of days to subtract to reach the last Sunday
+        days_to_subtract = (7 + current_date.weekday()) % 6
+
+        # Subtract the days to get the date of the last Sunday
+        last_sunday_date = current_date - timedelta(days=days_to_subtract)
+
+        return last_sunday_date.strftime("%Y/%m/%d")
+
+    def run_analysis(self):
+        name = self.name_entry.get()
+        start_day = self.start_day_entry.get()
+        file_path = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=[("CSV files", "*.csv"), ("all files", "*.*")])
+
+        data_loader = DataLoader(file_path, start_day, NUMBER_OF_DAYS)
+        df = data_loader.load_data()
+
+        report_generator = ReportGenerator(df)
+        report = report_generator.compile_report()
+
+        template_renderer = TemplateRenderer('data/log_template.docx')
+        output_path = f'./Registo_Treino {name}.docx'
+        template_renderer.render_report(report, output_path)
+
+        self.root.destroy()
+        
 if __name__ == "__main__":
-    root = tk.Tk()
-
-    label1 = tk.Label(root, text="Name:")
-    label1.pack()
-    entry1 = tk.Entry(root)
-    entry1.pack()
-    entry1.insert(0, "Diogo")
-
-    label2 = tk.Label(root, text="Start day:")
-    label2.pack()
-    entry2 = tk.Entry(root)
-    entry2.pack()
-    entry2.insert(0, last_sunday())
-
-    button2 = tk.Button(root, text="Open CSV File and Generate Report", command=run_analysis)
-    button2.pack()
-
-    root.mainloop()
+    app = GUIApplication()
