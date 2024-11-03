@@ -9,3 +9,11 @@ setup:
 .PHONY: run
 run:
 	python3 main.py
+
+.PHONY: run-cli
+run-cli:
+	python3 src/training_log_generator/cli.py
+
+.PHONY: run-app
+run-app:
+	streamlit run src/training_log_generator/app.py
