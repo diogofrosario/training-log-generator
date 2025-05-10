@@ -1,16 +1,17 @@
 from typing import Dict
-from docxtpl import DocxTemplate
+from docxtpl import DocxTemplate # type: ignore[import]
 from datetime import timedelta
 
 class TemplateRenderer:
     def __init__(self, template_path: str):
         self.template_path = template_path
 
-    def render_report(self, report: Dict[str, Dict[str, list]], output_path: str) -> None:
+    def render_report(self, report: Dict[str, Dict[str, list]], output_path: str) -> DocxTemplate:
         doc = DocxTemplate(self.template_path)
         context = self.__prepare_context(report)
         doc.render(context)
         doc.save(output_path)
+        # return doc
 
     def __prepare_context(self, data: Dict[str, Dict[str, list]]) -> Dict[str, str]:
         context = {}
@@ -85,10 +86,9 @@ class TemplateRenderer:
             )  # Debug statement
 
             total_distance += sum(
-                item["Distance"] for item in morning_data + afternoon_data
+                float(item["Distance"]) for item in morning_data + afternoon_data
             )
 
         context["WEEKLY_DISTANCE"] = str(round(total_distance, 2))
         # print(f"Weekly Total Distance: {total_distance}")  # Debug statement
         return context
-    

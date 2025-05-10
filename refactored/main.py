@@ -7,7 +7,7 @@ from typing import Dict
 
 from docxtpl import DocxTemplate
 
-from refactored.utils import prepare_data, prepare_context
+from utils import prepare_data, prepare_context
 
 import warnings
 

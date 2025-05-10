@@ -1,0 +1,20 @@
+[project]
+name = "training-log-generator"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "diogofrosario diogofiliperosario00@gmail.com"}
+]
+readme = "README.md"
+requires-python = "3.12.2"
+dependencies = [
+    "pandas (>=2.2.3,<3.0.0)",
+    "numpy (>=2.2.2,<3.0.0)",
+    "docxtpl (>=0.19.1,<0.20.0)",
+    "streamlit (>=1.41.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

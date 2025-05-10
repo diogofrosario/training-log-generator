@@ -14,6 +14,7 @@ class ReportGenerator:
                 report[date] = {"morning": [], "afternoon": []}
 
             for _, row in group_df.iterrows():
+                # print(row)
                 run_info = {"Time": row["Time"], "Distance": row["Distance"], "Pace": row["Avg Pace"]}
                 report[date][am_pm].append(run_info)
 

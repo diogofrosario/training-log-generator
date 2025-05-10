@@ -2,9 +2,9 @@ import tkinter as tk
 from tkinter import filedialog
 from datetime import datetime, timedelta
 
-from training_log_generator.dataloader import DataLoader
-from training_log_generator.report import ReportGenerator
-from training_log_generator.renderer import TemplateRenderer
+from dataloader import DataLoader
+from report import ReportGenerator
+from renderer import TemplateRenderer
 
 
 class GUIApplication:

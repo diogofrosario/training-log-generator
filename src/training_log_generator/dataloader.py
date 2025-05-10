@@ -27,12 +27,13 @@ class DataLoader:
         return df
 
     def __rename_columns_for_portuguese(self, df: pd.DataFrame) -> pd.DataFrame:
-        df.rename(columns={"Data": "Date", "Distância": "Distance", "Tempo": "Time", "Ritmo médio": "Avg Pace"}, inplace=True)
+        df.rename(columns={"Data": "Date", "Distância": "Distance", "Tempo": "Time", "Ritmo médio": "Avg Pace", "Velocidade média": "Avg Pace",}, inplace=True)
         return df
 
     def __create_date_and_time_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        df["Date"] = pd.to_datetime(df["Date"]).dt.date
-        df["Time_of_Day"] = pd.to_datetime(df["Date"]).dt.time
+        df[['Date', 'Time_of_Day']] = df['Date'].str.split(' ', expand=True)
+        df['Date'] = pd.to_datetime(df['Date']).dt.date
+        df['Time_of_Day'] = pd.to_datetime(df['Time_of_Day']).dt.time
         return df
 
     def __filter_by_date(self, df: pd.DataFrame) -> pd.DataFrame:
